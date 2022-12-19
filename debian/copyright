@@ -1,0 +1,24 @@
+Format: https://www.debian.org/doc/packaging-manuals/copyright-format/1.0/
+Upstream-Name: copybara
+Upstream-Contact: https://github.com/google/copybara
+Source: https://github.com/google/copybara
+
+Files: *
+Copyright: 2016-2022, Google Inc.
+License: Apache-2.0
+
+Files: debian/*
+Copyright: 2022, Ryan Pavlik <ryan@ryanpavlik.com>
+License: Apache-2.0
+
+Files: third_party/bazel/bashunit/testenv.sh
+Copyright: 2014, 2015, The Bazel Authors.
+License: Apache-2.0
+
+Files: third_party/bazel/main/*
+Copyright: 2014, 2015, The Bazel Authors.
+License: Apache-2.0
+
+License: Apache-2.0
+ On Debian systems the full text of the Apache-2.0 license can be found in
+ /usr/share/common-licenses/Apache-2.0.

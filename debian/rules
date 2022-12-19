@@ -1,0 +1,29 @@
+#!/usr/bin/make -f
+# You must remove unused comment lines for the released package.
+export DH_VERBOSE = 1
+#export DEB_BUILD_MAINT_OPTIONS = hardening=+all
+#export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic
+#export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed
+
+include /usr/share/javahelper/java-vars.mk
+
+%:
+	dh $@ --with javahelper
+
+override_dh_auto_build:
+	bazel build //java/com/google/copybara:copybara_deploy.jar
+	bazel shutdown
+	cp bazel-bin/java/com/google/copybara/copybara_deploy.jar bazel-bin/copybara
+	chmod +x bazel-bin/copybara
+
+#override_dh_auto_install:
+#       dh_auto_install -- prefix=/usr
+
+#override_dh_install:
+#       dh_install --list-missing -X.pyc -X.pyo
+
+override_dh_auto_clean:
+	bazel clean
+	bazel shutdown
+	-rm -rf bazel-*
+	dh_auto_clean

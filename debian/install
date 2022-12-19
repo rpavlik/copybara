@@ -1,0 +1,1 @@
+bazel-bin/java/com/google/copybara/copybara_deploy.jar usr/share/copybara
