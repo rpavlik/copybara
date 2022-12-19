@@ -1,0 +1,19 @@
+From: Ryan Pavlik <ryan.pavlik@collabora.com>
+Date: Mon, 19 Dec 2022 12:25:49 -0600
+Subject: Search local maven repo
+
+---
+ repositories.maven.bzl | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/repositories.maven.bzl b/repositories.maven.bzl
+index 8a6b700..2a035a9 100644
+--- a/repositories.maven.bzl
++++ b/repositories.maven.bzl
+@@ -54,5 +54,5 @@ def copybara_maven_repositories():
+         maven_install,
+         name = DEFAULT_REPOSITORY_NAME,
+         artifacts = COPYBARA_MAVEN_ARTIFACTS,
+-        repositories = COPYBARA_MAVEN_ARTIFACT_ADDITIONAL_REPOSITORIES + ["https://repo1.maven.org/maven2"],
++        repositories = ["/usr/share/maven-repo"] + COPYBARA_MAVEN_ARTIFACT_ADDITIONAL_REPOSITORIES + ["https://repo1.maven.org/maven2"],
+     )
