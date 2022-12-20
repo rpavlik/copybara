@@ -10,7 +10,12 @@ include /usr/share/javahelper/java-vars.mk
 %:
 	dh $@ --with javahelper
 
-override_dh_auto_build:
+%.html: %.md
+	pandoc -f gfm -t html $< > $@
+
+HTML_DOCS := docs/reference.html docs/examples.html README.html
+
+override_dh_auto_build: $(HTML_DOCS)
 	bazel build //java/com/google/copybara:copybara_deploy.jar
 	bazel shutdown
 	cp bazel-bin/java/com/google/copybara/copybara_deploy.jar bazel-bin/copybara
@@ -26,4 +31,5 @@ override_dh_auto_clean:
 	bazel clean
 	bazel shutdown
 	-rm -rf bazel-*
+	-rm -f $(HTML_DOCS)
 	dh_auto_clean
