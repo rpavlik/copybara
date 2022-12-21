@@ -1,5 +1,5 @@
-copybara (0.0.0.r2742.g552c0a47-1) UNRELEASED; urgency=medium
+copybara (0.0.0.r2742.g552c0a47-1) unstable; urgency=medium
 
-  * Initial release. (Closes: #XXXXXX)
+  * Initial quick/temporary release, not suitable for submission to Debian.
 
- -- Ryan Pavlik <ryan@ryanpavlik.com>  Mon, 19 Dec 2022 11:25:29 -0600
+ -- Ryan Pavlik <ryan@ryanpavlik.com>  Wed, 21 Dec 2022 12:56:30 -0600
