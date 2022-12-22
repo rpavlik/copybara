@@ -22,7 +22,8 @@ BAZEL_STARTUP_ARGS := \
   --bazelrc=/dev/null \
   --nohome_rc \
   --max_idle_secs=5 \
-  --output_user_root=$(shell pwd)/bazel-outroot
+  --output_user_root=/tmp/bazel-out-user-root \
+
 
 # Point to system JRE/JDK
 BAZEL_BUILD_ARGS := \
@@ -35,8 +36,8 @@ override_dh_auto_build:
 	-bazel $(BAZEL_STARTUP_ARGS) shutdown
 
 override_dh_auto_clean:
-	bazel $(BAZEL_STARTUP_ARGS) clean
-	-bazel $(BAZEL_STARTUP_ARGS) shutdown
+	bazel $(BAZEL_STARTUP_ARGS) clean --expunge
+	# -bazel $(BAZEL_STARTUP_ARGS) shutdown
 	-rm -rf bazel-*
 	-rm -f $(HTML_DOCS)
 	dh_auto_clean
