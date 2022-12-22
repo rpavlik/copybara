@@ -32,11 +32,11 @@ override_dh_auto_build:
 	bazel $(BAZEL_STARTUP_ARGS) build //java/com/google/copybara:generate_reference $(BAZEL_BUILD_ARGS)
 	$(MAKE) -f debian/rules html_docs
 	bazel $(BAZEL_STARTUP_ARGS) build //java/com/google/copybara:copybara_deploy.jar $(BAZEL_BUILD_ARGS)
-	bazel $(BAZEL_STARTUP_ARGS) shutdown
+	-bazel $(BAZEL_STARTUP_ARGS) shutdown
 
 override_dh_auto_clean:
 	bazel $(BAZEL_STARTUP_ARGS) clean
-	bazel $(BAZEL_STARTUP_ARGS) shutdown
+	-bazel $(BAZEL_STARTUP_ARGS) shutdown
 	-rm -rf bazel-*
 	-rm -f $(HTML_DOCS)
 	dh_auto_clean
