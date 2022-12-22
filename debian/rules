@@ -22,6 +22,7 @@ BAZEL_STARTUP_ARGS := \
   --bazelrc=/dev/null \
   --nohome_rc \
   --max_idle_secs=5 \
+  --output_user_root=$(shell pwd)/bazel-outroot
 
 # Point to system JRE/JDK
 BAZEL_BUILD_ARGS := \
