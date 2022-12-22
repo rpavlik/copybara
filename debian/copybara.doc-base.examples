@@ -1,0 +1,11 @@
+Document: copybara-examples
+Title: Copybara Examples
+Abstract: Examples and descriptions for Copybara config files
+Section: Programming
+
+Format: HTML
+Index: /usr/share/doc/copybara/examples.html
+Files: /usr/share/doc/copybara/examples.html
+
+Format: Text
+Files: /usr/share/doc/copybara/examples.md.gz

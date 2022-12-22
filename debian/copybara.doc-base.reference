@@ -1,0 +1,11 @@
+Document: copybara-reference
+Title: Copybara Reference
+Abstract: Reference documentation Copybara config files
+Section: Programming
+
+Format: HTML
+Index: /usr/share/doc/copybara/reference.html
+Files: /usr/share/doc/copybara/reference.html
+
+Format: Text
+Files: /usr/share/doc/copybara/reference.md.gz
