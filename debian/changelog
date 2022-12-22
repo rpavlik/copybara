@@ -1,3 +1,22 @@
+copybara (0.0.0.r2746.g2afcc641-1) UNRELEASED; urgency=medium
+
+  [ Josh Goldman ]
+  * Skip diff3 exit code 2
+
+  [ Mikel Alcon ]
+  * Add a new status 'pending'
+
+  [ Jordan Lin ]
+  * Update pr origin to find pull request by search endpoint
+
+  [ Chris Campos ]
+  * Expose Bazel JSON parser in Starlark
+
+  [ Ryan Pavlik ]
+  * Add gbp.conf
+
+ -- Ryan Pavlik <ryan@ryanpavlik.com>  Thu, 22 Dec 2022 11:31:07 -0600
+
 copybara (0.0.0.r2742.g552c0a47-1) unstable; urgency=medium
 
   * Initial quick/temporary release, not suitable for submission to Debian.
