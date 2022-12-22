@@ -9,22 +9,33 @@ include /usr/share/javahelper/java-vars.mk
 %.html: %.md
 	pandoc -f gfm -t html $< > $@
 
-HTML_DOCS := docs/reference.html docs/examples.html README.html
+HTML_DOCS := bazel-bin/java/com/google/copybara/reference.html docs/examples.html README.html
 
-BAZEL_ARGS := --verbose_failures \
-              --define=ABSOLUTE_JAVABASE=$(JAVA_HOME) \
-              --javabase=@bazel_tools//tools/jdk:absolute_javabase \
-              --host_javabase=@bazel_tools//tools/jdk:absolute_javabase \
-              --java_toolchain=@bazel_tools//tools/jdk:toolchain_vanilla \
-              --host_java_toolchain=@bazel_tools//tools/jdk:toolchain_vanilla \
+html_docs: $(HTML_DOCS)
+.PHONY: html_docs
 
-override_dh_auto_build: $(HTML_DOCS)
-	bazel build //java/com/google/copybara:copybara_deploy.jar $(BAZEL_ARGS)
-	bazel shutdown
+# use our packaging-specific bazelrc,
+# don't pick up random bazelrc files after that,
+# and shutdown the server quickly
+BAZEL_STARTUP_ARGS := \
+  --bazelrc=debian/.bazelrc \
+  --bazelrc=/dev/null \
+  --nohome_rc \
+  --max_idle_secs=5 \
+
+# Point to system JRE/JDK
+BAZEL_BUILD_ARGS := \
+  --define=ABSOLUTE_JAVABASE=$(JAVA_HOME) \
+
+override_dh_auto_build:
+	bazel $(BAZEL_STARTUP_ARGS) build //java/com/google/copybara:generate_reference $(BAZEL_BUILD_ARGS)
+	$(MAKE) -f debian/rules html_docs
+	bazel $(BAZEL_STARTUP_ARGS) build //java/com/google/copybara:copybara_deploy.jar $(BAZEL_BUILD_ARGS)
+	bazel $(BAZEL_STARTUP_ARGS) shutdown
 
 override_dh_auto_clean:
-	bazel clean
-	bazel shutdown
+	bazel $(BAZEL_STARTUP_ARGS) clean
+	bazel $(BAZEL_STARTUP_ARGS) shutdown
 	-rm -rf bazel-*
 	-rm -f $(HTML_DOCS)
 	dh_auto_clean

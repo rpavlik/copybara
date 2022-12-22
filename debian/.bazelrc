@@ -1,0 +1,18 @@
+# From workspace bazelrc
+build --test_env='LC_ALL=en_US.UTF-8'
+build --jvmopt='-Dsun.jnu.encoding=UTF-8'
+build --jvmopt='-Dfile.encoding=UTF-8'
+build --test_env='LANG=en_US.UTF-8'
+build --java_language_version=11
+
+# Show command line when we fail
+build  --verbose_failures
+
+# use system JRE/JDK
+build  --javabase=@bazel_tools//tools/jdk:absolute_javabase
+build  --host_javabase=@bazel_tools//tools/jdk:absolute_javabase
+build  --java_toolchain=@bazel_tools//tools/jdk:toolchain_vanilla
+build  --host_java_toolchain=@bazel_tools//tools/jdk:toolchain_vanilla
+
+# Recommended for running from script
+build  --nokeep_state_after_build

@@ -1,6 +1,6 @@
 docs/examples.md
 docs/examples.html
-docs/reference.md
-docs/reference.html
+bazel-bin/java/com/google/copybara/reference.md
+bazel-bin/java/com/google/copybara/reference.html
 README.md
 README.html
