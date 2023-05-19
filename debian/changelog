@@ -1,4 +1,4 @@
-copybara (0.0.0.r2746.g2afcc641-1) UNRELEASED; urgency=medium
+copybara (0.0.0.r2746.g2afcc641-1) unstable; urgency=medium
 
   [ Josh Goldman ]
   * Skip diff3 exit code 2
@@ -14,8 +14,15 @@ copybara (0.0.0.r2746.g2afcc641-1) UNRELEASED; urgency=medium
 
   [ Ryan Pavlik ]
   * Add gbp.conf
+  * Be sure to use system jdk
+  * Improve building, ensure docs always generated, etc.
+  * Add doc-base registration files
+  * Artificial tag format
+  * Move the bazel cache
+  * OK if bazel shutdown fails
+  * Don't try to shutdown after clean
 
- -- Ryan Pavlik <ryan@ryanpavlik.com>  Thu, 22 Dec 2022 11:31:07 -0600
+ -- Ryan Pavlik <ryan@ryanpavlik.com>  Fri, 19 May 2023 11:51:27 -0500
 
 copybara (0.0.0.r2742.g552c0a47-1) unstable; urgency=medium
 
