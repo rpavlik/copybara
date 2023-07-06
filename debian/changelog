@@ -1,3 +1,66 @@
+copybara (0.0.0.r2767.g4ba67489-1) UNRELEASED; urgency=medium
+
+  * New upstream release: last release compatible with pre-Bazel 6.0
+
+  [ Josh Goldman ]
+  * Add readFile implementation to RecordsProcessCallDestination
+
+  [ Jordan Lin ]
+  * Add --version-selector-use-cli-ref flag to general options
+
+  [ James Wright ]
+  * Handle NPE in AutoPatchUtil.java
+
+  [ Jordan Lin ]
+  * Introduce version resolver
+
+  [ Chris Campos ]
+  * Move StarlarkDateTimeModule to its own java_library rule
+
+  [ Mike Kruskal ]
+  * Improve copybara's status check handling.
+
+  [ Henry Sudhof ]
+  * Fix documentation for Re2.matcher
+
+  [ Josh Goldman ]
+  * Expose copyDestinationFiles to starlark
+  * Add listIssueComments to Copybara GitHub API
+
+  [ Chris Campos ]
+  * Module for parsing TOML in Starlark
+
+  [ Jordan Lin ]
+  * Add Go module
+
+  [ Henry Sudhof ]
+  * Rolling back 3359f023a62b127ad07b36dcafa47dcb38014ead
+  * Get 100 checkruns per query
+
+  [ Mikel Alcon ]
+  * Fix mergeableStatus check
+
+  [ Jordan Lin ]
+  * Add graphql client implementation for GitHubAPI
+
+  [ Mikel Alcon ]
+  * Read also 'mergeable' field from the PR result
+
+  [ Henry Sudhof ]
+  * Broaden Pagination logic to handle special cases
+
+  [ Copybara Team ]
+  * Update dependency bazelbuild/buildtools to latest version
+
+  [ Mikel Alcon ]
+  * Allow additional mergeable statuses to skip upload
+  * Change the strategy for mergeable status
+
+  [ Josh Goldman ]
+  * Simplify AutoPatch directory handling
+
+ -- Ryan Pavlik <ryan@ryanpavlik.com>  Thu, 06 Jul 2023 15:00:52 -0500
+
 copybara (0.0.0.r2746.g2afcc641-1) unstable; urgency=medium
 
   [ Josh Goldman ]
