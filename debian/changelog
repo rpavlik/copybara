@@ -1,4 +1,4 @@
-copybara (0.0.0.r2767.g4ba67489-1) UNRELEASED; urgency=medium
+copybara (0.0.0.r2767.g4ba67489-1) unstable; urgency=medium
 
   [ Ryan Pavlik ]
   * New upstream release: last release compatible with pre-Bazel 6.0
@@ -66,7 +66,7 @@ copybara (0.0.0.r2767.g4ba67489-1) UNRELEASED; urgency=medium
   * Simplify AutoPatch directory handling
 
 
- -- Ryan Pavlik <ryan@ryanpavlik.com>  Thu, 06 Jul 2023 15:07:08 -0500
+ -- Ryan Pavlik <ryan@ryanpavlik.com>  Thu, 06 Jul 2023 15:28:37 -0500
 
 copybara (0.0.0.r2746.g2afcc641-1) unstable; urgency=medium
 
