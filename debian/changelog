@@ -1,6 +1,12 @@
 copybara (0.0.0.r2767.g4ba67489-1) UNRELEASED; urgency=medium
 
+  [ Ryan Pavlik ]
   * New upstream release: last release compatible with pre-Bazel 6.0
+  * d/control:
+    - Bump Standards-Version to 4.6.2, no changes
+    - Update debhelper-compat
+  * Fix paths in doc-base file
+  * d/copyright: Update using cme
 
   [ Josh Goldman ]
   * Add readFile implementation to RecordsProcessCallDestination
@@ -59,7 +65,8 @@ copybara (0.0.0.r2767.g4ba67489-1) UNRELEASED; urgency=medium
   [ Josh Goldman ]
   * Simplify AutoPatch directory handling
 
- -- Ryan Pavlik <ryan@ryanpavlik.com>  Thu, 06 Jul 2023 15:00:52 -0500
+
+ -- Ryan Pavlik <ryan@ryanpavlik.com>  Thu, 06 Jul 2023 15:07:08 -0500
 
 copybara (0.0.0.r2746.g2afcc641-1) unstable; urgency=medium
 
