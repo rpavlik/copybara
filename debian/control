@@ -6,8 +6,8 @@ Build-Depends: bazel-bootstrap | bazel,
                debhelper-compat (= 11),
                default-jdk-headless,
                javahelper,
-               pandoc,
-Standards-Version: 4.5.1
+               pandoc
+Standards-Version: 4.6.2
 Homepage: https://github.com/google/copybara
 Rules-Requires-Root: no
 
