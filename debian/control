@@ -3,7 +3,7 @@ Maintainer: Ryan Pavlik <ryan@ryanpavlik.com>
 Section: misc
 Priority: optional
 Build-Depends: bazel-bootstrap | bazel,
-               debhelper-compat (= 11),
+               debhelper-compat (= 13),
                default-jdk-headless,
                javahelper,
                pandoc
