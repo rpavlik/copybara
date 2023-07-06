@@ -1,4 +1,8 @@
 
+# This entire file can be dropped once our upstream source includes
+# https://github.com/google/copybara/commit/6f8440769a822d2bf075cdea1ed1351abb72a05c
+# which fixes the problems that the below lines compensated for.
+
 # Trim spurious letter that was trailing the year
 ! Files:~/.*/ Copyright=~"s/[sz] Google/Google/"
 
