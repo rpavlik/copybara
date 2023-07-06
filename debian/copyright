@@ -4,11 +4,11 @@ Upstream-Contact: https://github.com/google/copybara
 Source: https://github.com/google/copybara
 
 Files: *
-Copyright: 2016-2022, Google Inc.
+Copyright: 2016-2023, Google Inc.
 License: Apache-2.0
 
 Files: debian/*
-Copyright: 2022, Ryan Pavlik <ryan@ryanpavlik.com>
+Copyright: 2022-2023, Ryan Pavlik <ryan@ryanpavlik.com>
 License: Apache-2.0
 
 Files: third_party/bazel/bashunit/testenv.sh
