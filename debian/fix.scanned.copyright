@@ -1,0 +1,7 @@
+
+# Trim spurious letter that was trailing the year
+! Files:~/.*/ Copyright=~"s/[sz] Google/Google/"
+
+
+# Trim trailing quote
+! Files:~/.*/ Copyright=~"s/\s+\"$//"

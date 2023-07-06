@@ -1,0 +1,7 @@
+---
+check:
+  suffixes:
+   - "bzl"
+ignore:
+  suffixes:
+    - "json"

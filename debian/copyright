@@ -8,7 +8,23 @@ Copyright: 2016-2023, Google Inc.
 License: Apache-2.0
 
 Files: debian/*
-Copyright: 2022-2023, Ryan Pavlik <ryan@ryanpavlik.com>
+Copyright: 2022, 2023, Ryan Pavlik <ryan@ryanpavlik.com>
+License: Apache-2.0
+
+Files: javatests/com/google/copybara/monitor/BUILD
+Copyright: 2018, Google Inc.
+License: Apache-2.0
+
+Files: javatests/com/google/copybara/profiler/ConsoleProfilerListenerTest.java
+Copyright: 2019, Google Inc.
+License: Apache-2.0
+
+Files: javatests/com/google/copybara/transform/VerifyMatchTest.java
+Copyright: 2016, Google Inc.
+License: Apache-2.0
+
+Files: third_party/bazel/bashunit/*
+Copyright: 2016, Google Inc.
 License: Apache-2.0
 
 Files: third_party/bazel/bashunit/testenv.sh
