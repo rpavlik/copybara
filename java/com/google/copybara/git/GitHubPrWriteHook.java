@@ -18,6 +18,7 @@ package com.google.copybara.git;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.google.copybara.GeneralOptions;
 import com.google.copybara.exception.RedundantChangeException;
 import com.google.copybara.exception.RepoException;
@@ -42,6 +43,7 @@ public class GitHubPrWriteHook extends DefaultWriteHook {
   private final GeneralOptions generalOptions;
   private final GitHubOptions gitHubOptions;
   private final boolean partialFetch;
+  private final ImmutableSet<String> allowEmptyDiffMergeStatuses;
   private final Console console;
   private GitHubHost ghHost;
   @Nullable private final String prBranchToUpdate;
@@ -54,7 +56,7 @@ public class GitHubPrWriteHook extends DefaultWriteHook {
       @Nullable String prBranchToUpdate,
       boolean partialFetch,
       boolean allowEmptyDiff,
-      Console console,
+      ImmutableSet<String> allowEmptyDiffMergeStatuses, Console console,
       GitHubHost ghHost) {
     this.generalOptions = Preconditions.checkNotNull(generalOptions);
     this.repoUrl = Preconditions.checkNotNull(repoUrl);
@@ -62,6 +64,7 @@ public class GitHubPrWriteHook extends DefaultWriteHook {
     this.prBranchToUpdate = prBranchToUpdate;
     this.partialFetch = partialFetch;
     this.allowEmptyDiff = allowEmptyDiff;
+    this.allowEmptyDiffMergeStatuses = allowEmptyDiffMergeStatuses;
     this.console = Preconditions.checkNotNull(console);
     this.ghHost = Preconditions.checkNotNull(ghHost);
   }
@@ -78,7 +81,7 @@ public class GitHubPrWriteHook extends DefaultWriteHook {
     }
     for (Change<?> originalChange : originChanges) {
       String configProjectName = ghHost.getProjectNameFromUrl(repoUrl);
-      GitHubApi api = gitHubOptions.newGitHubApi(configProjectName);
+      GitHubApi api = gitHubOptions.newGitHubRestApi(configProjectName);
 
       try {
         ImmutableList<PullRequest> pullRequests =
@@ -96,54 +99,64 @@ public class GitHubPrWriteHook extends DefaultWriteHook {
         }
         SameGitTree sameGitTree =
             new SameGitTree(scratchClone, repoUrl, generalOptions, partialFetch);
-        PullRequest pullRequest =  pullRequests.get(0);
-        if (skipUploadBasedOnPrStatus(pullRequest)
-            && sameGitTree.hasSameTree(pullRequest.getHead().getSha())) {
+        PullRequest pullRequest = pullRequests.get(0);
+        if (sameGitTree.hasSameTree(pullRequest.getHead().getSha())
+            && skipUploadBasedOnPrStatus(configProjectName, api,
+            pullRequest.getNumber())) {
           throw new RedundantChangeException(
               String.format(
                   "Skipping push to the existing pr %s/pull/%s as the change %s is empty.",
                   repoUrl, pullRequest.getNumber(), originalChange.getRef()),
               pullRequest.getHead().getSha());
         }
-      } catch(GitHubApiException e) {
-          if (e.getResponseCode() == ResponseCode.NOT_FOUND
-              || e.getResponseCode() == ResponseCode.UNPROCESSABLE_ENTITY) {
-            console.verboseFmt("Branch %s does not exist", this.prBranchToUpdate);
-          }
-          throw e;
+      } catch (GitHubApiException e) {
+        if (e.getResponseCode() == ResponseCode.NOT_FOUND
+            || e.getResponseCode() == ResponseCode.UNPROCESSABLE_ENTITY) {
+          console.verboseFmt("Branch %s does not exist", this.prBranchToUpdate);
         }
+        throw e;
+      }
     }
   }
 
-  private boolean skipUploadBasedOnPrStatus(PullRequest pullRequest) {
-    // TODO(malcon): Remove after 2023-01-31 once the feature is proven to be stable
-    if (generalOptions.isTemporaryFeature(
-        "DISABLE_PR_STATUS_SKIP_EMPTY_DIFF", false)) {
-      return true;
-    }
-    Boolean mergeable = pullRequest.isMergeable();
+  private boolean skipUploadBasedOnPrStatus(String configProjectName, GitHubApi api, long prNumber)
+      throws ValidationException, RepoException {
+    // This call to getPullRequest might look like unnecessary, but it is not. The previous
+    // pull request is received by searching PRs by branch name, and for some reason, GitHub
+    // doesn't return this 'experimental' field. So we are forced to do an additional request
+    // to get the full data of the PR.
+    PullRequest completePr = api.getPullRequest(configProjectName, prNumber);
+    Boolean mergeable = completePr.isMergeable();
     if (mergeable == null || !mergeable) {
-      console.verboseFmt("Not skipping upload because mergeable is: %s", mergeable);
+      console.verboseFmt("Not skipping upload because 'mergeable' is: %s", mergeable);
       return false;
     }
-    String mergeableState = pullRequest.getMergeableState();
+
+    // If user hasn't set any value, we don't look at mergeable status at all and assume we
+    // can skip.
+    if (allowEmptyDiffMergeStatuses.isEmpty()) {
+      return true;
+    }
+
+    String mergeableState = completePr.getMergeableState();
     // By default, if we don't know the status (mergeable_state is not stable API), we upload
     // a new patch
     if (mergeableState == null) {
-      console.verbose("Not skipping upload because mergeable status is null");
+      // Warn because it might be that GH has stopped populating it.
+      console.warn("Not skipping upload because 'mergeable status' is null");
       return false;
     }
-    // Using https://docs.github.com/en/graphql/reference/enums#mergestatestatus
-    switch (mergeableState) {
-      case "clean":
-      case "draft":
-      case "has_hooks":
-      case "behind":
-        console.verboseFmt("Skipping upload because mergeable status is %s", mergeableState);
-        return true;
-      default:
-        console.verboseFmt("Not skipping upload because mergeable status is %s", mergeableState);
-        return false;
+    // Valid values https://docs.github.com/en/graphql/reference/enums#mergestatestatus
+    if (allowEmptyDiffMergeStatuses.contains(mergeableState.toUpperCase())) {
+      console.infoFmt("Uploading change because mergeable status is %s, that is in the"
+              + " list of statuses to upload changes: %s", mergeableState.toUpperCase(),
+          allowEmptyDiffMergeStatuses);
+      return false;
+    } else {
+      console.infoFmt("Skipping upload because mergeable status is %s, that is NOT in the"
+              + " list of statuses to upload changes: %s", mergeableState.toUpperCase(),
+          allowEmptyDiffMergeStatuses);
+      return true;
     }
   }
 
@@ -155,6 +168,7 @@ public class GitHubPrWriteHook extends DefaultWriteHook {
         prBranchToUpdate,
         this.partialFetch,
         this.allowEmptyDiff,
+        this.allowEmptyDiffMergeStatuses,
         this.console,
         this.ghHost);
   }

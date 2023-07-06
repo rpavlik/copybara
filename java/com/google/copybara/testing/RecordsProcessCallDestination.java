@@ -16,7 +16,8 @@
 
 package com.google.copybara.testing;
 
-import static java.nio.charset.StandardCharsets.UTF_8;
+import static com.google.common.collect.ImmutableMap.toImmutableMap;
+import static com.google.copybara.config.SkylarkUtil.convertFromNoneable;
 
 import com.google.common.base.MoreObjects;
 import com.google.common.base.Preconditions;
@@ -27,6 +28,7 @@ import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableMultimap;
 import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
+import com.google.copybara.CheckoutPath;
 import com.google.copybara.Destination;
 import com.google.copybara.DestinationInfo;
 import com.google.copybara.DestinationReader;
@@ -60,9 +62,9 @@ import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map.Entry;
+import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 import javax.annotation.Nullable;
 import net.starlark.java.annot.Param;
 import net.starlark.java.annot.ParamType;
@@ -84,12 +86,19 @@ public class RecordsProcessCallDestination implements Destination<Revision> {
 
   @Nullable
   private Consumer<TransformResult> hook;
+  @Nullable Path filePrefix;
 
   public RecordsProcessCallDestination() {
     this(ImmutableList.of());
   }
   public RecordsProcessCallDestination(ImmutableList<ImmutableList<String>> errors) {
     this.programmedErrors = new ArrayDeque<>(errors);
+  }
+
+  public static RecordsProcessCallDestination withFilePrefix(Path filePrefix) {
+    RecordsProcessCallDestination toReturn = new RecordsProcessCallDestination();
+    toReturn.filePrefix = filePrefix;
+    return toReturn;
   }
 
   private final DummyEndpoint endpoint = new DummyEndpoint();
@@ -160,20 +169,44 @@ public class RecordsProcessCallDestination implements Destination<Revision> {
       return new DestinationReader() {
         @Override
         public String readFile(String path) throws RepoException {
-          throw new UnsupportedOperationException(
-              "Read file not supported in RecordsProcessCallDestination");
+          try {
+            Objects.requireNonNull(filePrefix);
+            return Files.readString(filePrefix.resolve(path));
+          } catch (IOException e) {
+            throw new RepoException(String.format("Could not read file at path %s", path), e);
+          }
         }
 
         @Override
-        public void copyDestinationFiles(Glob glob) throws RepoException, ValidationException {
+        public void copyDestinationFiles(Glob glob, Object path)
+            throws RepoException, ValidationException {
+          if (processed.isEmpty()) {
+            return;
+          }
+          CheckoutPath checkoutPath = convertFromNoneable(path, null);
           ProcessedChange processedChange = Iterables.getLast(processed);
           PathMatcher matcher = glob.relativeTo(Paths.get(""));
           for (Entry<String, String> e : processedChange.workdir.entrySet()) {
             Path p = Paths.get(e.getKey());
             if (matcher.matches(p)) {
               try {
-                Files.createDirectories(workdir.resolve(p).getParent());
-                Files.writeString(p, e.getValue());
+                if (checkoutPath == null) {
+                  Files.createDirectories(workdir.resolve(p).getParent());
+                  Files.writeString(p, e.getValue());
+                } else {
+                  if (p.toString().startsWith("/")) {
+                    p = Paths.get("/").relativize(p);
+                  }
+                  Files.createDirectories(
+                      checkoutPath
+                          .getCheckoutDir()
+                          .resolve(checkoutPath.getPath())
+                          .resolve(p)
+                          .getParent());
+                  Files.writeString(
+                      checkoutPath.getCheckoutDir().resolve(checkoutPath.getPath()).resolve(p),
+                      e.getValue());
+                }
               } catch (IOException ex) {
                 throw new RepoException("Copy destination files failed", ex);
               }
@@ -193,7 +226,12 @@ public class RecordsProcessCallDestination implements Destination<Revision> {
             Path p = Paths.get(e.getKey());
             if (matcher.matches(p)) {
               try {
-                Path resolvedPath = directory.resolve(Paths.get("/").relativize(p));
+                Path resolvedPath;
+                if (p.toString().startsWith("/")) {
+                  resolvedPath = directory.resolve(Paths.get("/").relativize(p));
+                } else {
+                  resolvedPath = directory.resolve(p);
+                }
                 Files.createDirectories(resolvedPath.getParent());
                 Files.writeString(resolvedPath, e.getValue());
               } catch (IOException ex) {
@@ -205,8 +243,7 @@ public class RecordsProcessCallDestination implements Destination<Revision> {
 
         @Override
         public boolean exists(String path) {
-          throw new UnsupportedOperationException(
-              "File reads not supported in RecordsProcessCallDestination");
+          return Files.exists(filePrefix.resolve(path));
         }
       };
     }
@@ -265,10 +302,10 @@ public class RecordsProcessCallDestination implements Destination<Revision> {
                     processedChange.getChangesSummary(),
                     processedChange.getTimestamp(),
                     ImmutableListMultimap.of()),
-                ImmutableMap.copyOf(labels
-                    .stream()
-                    .collect(Collectors.toMap(
-                            Function.identity(), e -> processedChange.getOriginRef().asString()))));
+                labels.stream()
+                    .collect(
+                        toImmutableMap(
+                            Function.identity(), e -> processedChange.getOriginRef().asString())));
         if (result == VisitResult.TERMINATE) {
           return;
         }
@@ -298,17 +335,19 @@ public class RecordsProcessCallDestination implements Destination<Revision> {
   private ImmutableMap<String, String> copyWorkdir(Path workdir) {
     ImmutableMap.Builder<String, String> result = ImmutableMap.builder();
     try {
-      Files.walkFileTree(workdir, new SimpleFileVisitor<Path>() {
+      Files.walkFileTree(
+          workdir,
+          new SimpleFileVisitor<Path>() {
 
-        @Override
-        public FileVisitResult visitFile(Path file, BasicFileAttributes attrs) throws IOException {
-          if (Files.isRegularFile(file)) {
-            result.put(workdir.relativize(file).toString(),
-                       new String(Files.readAllBytes(file), UTF_8));
-          }
-          return FileVisitResult.CONTINUE;
-        }
-      });
+            @Override
+            public FileVisitResult visitFile(Path file, BasicFileAttributes attrs)
+                throws IOException {
+              if (Files.isRegularFile(file)) {
+                result.put(workdir.relativize(file).toString(), Files.readString(file));
+              }
+              return FileVisitResult.CONTINUE;
+            }
+          });
     } catch (IOException e) {
       throw new IllegalStateException(e);
     }

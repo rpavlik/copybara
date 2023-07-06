@@ -139,6 +139,7 @@
     - [github_api_obj.get_pull_requests](#github_api_objget_pull_requests)
     - [github_api_obj.get_reference](#github_api_objget_reference)
     - [github_api_obj.get_references](#github_api_objget_references)
+    - [github_api_obj.list_issue_comments](#github_api_objlist_issue_comments)
     - [github_api_obj.new_destination_ref](#github_api_objnew_destination_ref)
     - [github_api_obj.new_origin_ref](#github_api_objnew_origin_ref)
     - [github_api_obj.post_issue_comment](#github_api_objpost_issue_comment)
@@ -149,6 +150,9 @@
     - [glob](#glob)
     - [new_author](#new_author)
     - [parse_message](#parse_message)
+  - [go](#go)
+    - [go.go_proxy_resolver](#gogo_proxy_resolver)
+    - [go.go_proxy_version_list](#gogo_proxy_version_list)
   - [hg](#hg)
     - [hg.origin](#hgorigin)
   - [mapping_function](#mapping_function)
@@ -195,6 +199,10 @@
   - [SetReviewInput](#setreviewinput)
   - [struct](#struct)
     - [struct](#struct)
+  - [toml](#toml)
+    - [toml.parse](#tomlparse)
+  - [TomlContent](#tomlcontent)
+    - [TomlContent.get](#tomlcontentget)
   - [transformation](#transformation)
   - [transformation_status](#transformation_status)
   - [TransformWork](#transformwork)
@@ -638,6 +646,7 @@ Name | Type | Description
 <span style="white-space: nowrap;">`--repo-timeout`</span> | *duration* | Repository operation timeout duration.  Example values: 30s, 20m, 1h, etc.
 <span style="white-space: nowrap;">`--squash`</span> | *boolean* | Override workflow's mode with 'SQUASH'. This is useful mainly for workflows that use 'ITERATIVE' mode, when we want to run a single export with 'SQUASH', maybe to fix an issue. Always use --dry-run before, to test your changes locally.
 <span style="white-space: nowrap;">`--validate-starlark`</span> | *string* | Starlark should be validated prior to execution, but this might break legacy configs. Options are LOOSE, STRICT
+<span style="white-space: nowrap;">`--version-selector-use-cli-ref`</span> | *boolean* | If command line ref is to used with a version selector, pass this flag to tell copybara to use it.
 <span style="white-space: nowrap;">`-v, --verbose`</span> | *boolean* | Verbose output.
 
 <a id="core.action" aria-hidden="true"></a>
@@ -660,7 +669,7 @@ params | `dict`<br><p>The parameters to the function. Will be available under ct
 
 Describes in the configuration for automatic patch file generation
 
-[`core.autopatch_config`](#coreautopatch_config) `core.autopatch_config(header=None, suffix='.patch', directory='AUTOPATCHES', strip_file_names_and_line_numbers=False)`
+[`core.autopatch_config`](#coreautopatch_config) `core.autopatch_config(header=None, suffix='.patch', directory_prefix='None', directory='AUTOPATCHES', strip_file_names_and_line_numbers=False)`
 
 
 #### Parameters:
@@ -668,7 +677,8 @@ Describes in the configuration for automatic patch file generation
 Parameter | Description
 --------- | -----------
 header | `string` or `NoneType`<br><p>A string to include at the beginning of each patch file</p>
-suffix | `string` or `NoneType`<br><p>Suffix to use when saving patch files</p>
+suffix | `string`<br><p>Suffix to use when saving patch files</p>
+directory_prefix | `string` or `NoneType`<br><p>Directory prefix used to relativize filenames when writing patch files. E.g. if filename is third_party/foo/bar/bar.go and we want to write third_party/foo/PATCHES/bar/bar.go, the value for this field would be 'third_party/foo'</p>
 directory | `string` or `NoneType`<br><p>Directory in which to save the patch files.</p>
 strip_file_names_and_line_numbers | `bool`<br><p>When true, strip filenames and line numbers from patch files</p>
 
@@ -1437,7 +1447,7 @@ Handle to read from the destination
 
 Copy files from the destination into the workdir.
 
-`destination_reader.copy_destination_files(glob)`
+`destination_reader.copy_destination_files(glob, path=None)`
 
 
 #### Parameters:
@@ -1445,6 +1455,7 @@ Copy files from the destination into the workdir.
 Parameter | Description
 --------- | -----------
 glob | [`glob`](#glob)<br><p>Files to copy to the workdir, potentially overwriting files checked out from the origin.</p>
+path | [`Path`](#path) or `NoneType`<br><p>Optional path to copy the files to</p>
 
 
 #### Example:
@@ -2452,6 +2463,7 @@ checker | `checker` or `NoneType`<br><p>A checker for the GitHub API transport.<
 Name | Type | Description
 ---- | ---- | -----------
 <span style="white-space: nowrap;">`--github-destination-delete-pr-branch`</span> | *boolean* | Overwrite git.github_destination delete_pr_branch field
+<span style="white-space: nowrap;">`--gql-commit-history-override`</span> | *list* | Flag used to target GraphQL params 'first' arguments in the event the defaults are over or underusing the api ratelimit. This should be rarely used for repos that don't fit well in our defaults. E.g. 50,5,5 represent 50 commits, 5 PRs for each commit, 5 reviews per PR
 
 <a id="git.github_destination" aria-hidden="true"></a>
 ### git.github_destination
@@ -2524,7 +2536,7 @@ primary_branch_migration | `bool`<br><p>When enabled, copybara will ignore the '
 
 Creates changes in a new pull request in the destination.
 
-`destination` `git.github_pr_destination(url, destination_ref='master', pr_branch=None, partial_fetch=False, allow_empty_diff=True, title=None, body=None, integrates=None, api_checker=None, update_description=False, primary_branch_migration=False, checker=None, draft=False)`
+`destination` `git.github_pr_destination(url, destination_ref='master', pr_branch=None, partial_fetch=False, allow_empty_diff=True, allow_empty_diff_merge_statuses=[], title=None, body=None, integrates=None, api_checker=None, update_description=False, primary_branch_migration=False, checker=None, draft=False)`
 
 
 #### Parameters:
@@ -2536,6 +2548,7 @@ destination_ref | `string`<br><p>Destination reference for the change.</p>
 pr_branch | `string` or `NoneType`<br><p>Customize the pull request branch. Any variable present in the message in the form of ${CONTEXT_REFERENCE} will be replaced by the corresponding stable reference (head, PR number, Gerrit change number, etc.).</p>
 partial_fetch | `bool`<br><p>This is an experimental feature that only works for certain origin globs.</p>
 allow_empty_diff | `bool`<br><p>By default, copybara migrates changes without checking existing PRs. If set, copybara will skip pushing a change to an existing PR only if the git three of the pending migrating change is the same as the existing PR.</p>
+allow_empty_diff_merge_statuses | `sequence of string`<br><p>**EXPERIMENTAL feature.** By default, if `allow_empty_diff = False` is set, Copybara skips uploading the change if the tree hasn't changed and it can be merged. When this list is set with values from https://docs.github.com/en/github-ae@latest/graphql/reference/enums#mergestatestatus, it will still upload for the configured statuses. For example, if a user sets it to `['DIRTY', 'UNSTABLE', 'UNKNOWN']` (the recommended set to use), it wouldn't skip upload if test failed in GitHub for previous export, or if the change cannot be merged. **Note that this field is experimental and is subject to change by GitHub without notice**. Please consult Copybara team before using this field.</p>
 title | `string` or `NoneType`<br><p>When creating (or updating if `update_description` is set) a pull request, use this title. By default it uses the change first line. This field accepts a template with labels. For example: `"Change ${CONTEXT_REFERENCE}"`</p>
 body | `string` or `NoneType`<br><p>When creating (or updating if `update_description` is set) a pull request, use this body. By default it uses the change summary. This field accepts a template with labels. For example: `"Change ${CONTEXT_REFERENCE}"`</p>
 integrates | `sequence of git_integrate` or `NoneType`<br><p>Integrate changes from a url present in the migrated change label. Defaults to a semi-fake merge if COPYBARA_INTEGRATE_REVIEW label is present in the message</p>
@@ -2695,6 +2708,7 @@ events | `sequence of string` or `dict of sequence`<br><p>Types of events to sub
 Name | Type | Description
 ---- | ---- | -----------
 <span style="white-space: nowrap;">`--github-destination-delete-pr-branch`</span> | *boolean* | Overwrite git.github_destination delete_pr_branch field
+<span style="white-space: nowrap;">`--gql-commit-history-override`</span> | *list* | Flag used to target GraphQL params 'first' arguments in the event the defaults are over or underusing the api ratelimit. This should be rarely used for repos that don't fit well in our defaults. E.g. 50,5,5 represent 50 commits, 5 PRs for each commit, 5 reviews per PR
 
 <a id="git.integrate" aria-hidden="true"></a>
 ### git.integrate
@@ -3122,7 +3136,7 @@ Get autenticated user info, return null if not found
 
 Get the list of check runs for a sha. https://developer.github.com/v3/checks/runs/#check-runs
 
-`github_check_runs_obj` `github_api_obj.get_check_runs(sha)`
+`sequence of github_check_run_obj` `github_api_obj.get_check_runs(sha)`
 
 
 #### Parameters:
@@ -3225,6 +3239,20 @@ ref | `string`<br><p>The name of the reference. For example: "refs/heads/branchN
 Get all the reference SHA-1s from GitHub. Note that Copybara only returns a maximum number of 500.
 
 `sequence of github_api_ref_obj` `github_api_obj.get_references()`
+
+<a id="github_api_obj.list_issue_comments" aria-hidden="true"></a>
+### github_api_obj.list_issue_comments
+
+Lists comments for an issue
+
+`sequence of github_api_issue_comment_obj` `github_api_obj.list_issue_comments(number)`
+
+
+#### Parameters:
+
+Parameter | Description
+--------- | -----------
+number | `int`<br><p>Issue or Pull Request number</p>
 
 <a id="github_api_obj.new_destination_ref" aria-hidden="true"></a>
 ### github_api_obj.new_destination_ref
@@ -3450,6 +3478,56 @@ Returns a ChangeMessage parsed from a well formed string.
 Parameter | Description
 --------- | -----------
 message | `string`<br><p>The contents of the change message</p>
+
+
+
+## go
+
+Module for Go related starlark operations
+
+<a id="go.go_proxy_resolver" aria-hidden="true"></a>
+### go.go_proxy_resolver
+
+Go resolver that knows what to do with command line passed refs.
+
+`VersionResolver` `go.go_proxy_resolver(module)`
+
+
+#### Parameters:
+
+Parameter | Description
+--------- | -----------
+module | `string`<br><p>The go module path name. e.g. github.com/google/gopacket. This will automatically normalize uppercase characters to '!{your_uppercase_character}' to escape them.</p>
+
+<a id="go.go_proxy_version_list" aria-hidden="true"></a>
+### go.go_proxy_version_list
+
+Returns go proxy version list object
+
+`GoProxyVersionList` `go.go_proxy_version_list(module, ref=None)`
+
+
+#### Parameters:
+
+Parameter | Description
+--------- | -----------
+module | `string`<br><p>The go module path name. e.g. github.com/google/gopacket. This will automatically normalize uppercase characters to '!{your_uppercase_character}' to escape them.</p>
+ref | `string` or `NoneType`<br><p>This parameter is primarily used to track versions at specific branches and revisions. If a value is supplied, the returned version list will attempt to extract version data from ${ref}.info found with go proxy at the /@v/${ref}.info endpoint. You can leave off the .info suffix.</p>
+
+
+#### Example:
+
+
+##### Create a version list for a given go package:
+
+Example of how create a version list for github.com/google/gopacket
+
+```python
+go.go_proxy_version_list(
+        module='github.com/google/gopacket'
+)
+```
+
 
 
 
@@ -4475,7 +4553,7 @@ A RE2 regex pattern object to perform regexes in Starlark
 <a id="re2_pattern.matcher" aria-hidden="true"></a>
 ### re2_pattern.matcher
 
-Return true if the string matches the regex pattern
+Return a Matcher for the given input.
 
 [`re2_matcher`](#re2_matcher) `re2_pattern.matcher(input)`
 
@@ -4543,7 +4621,7 @@ Name | Type | Description
 
 Defines a remote file origin. This is a WIP and experimental. Do not use. 
 
-`origin` `remotefiles.origin(author='Copybara <noreply@copybara.io>', message='Placeholder message', unpack_method='AS_IS', archive_source='', version_list=None, origin_version_selector=None, version_selector=None, base_url=None)`
+`origin` `remotefiles.origin(author='Copybara <noreply@copybara.io>', message='Placeholder message', unpack_method='AS_IS', archive_source='', version_list=None, origin_version_selector=None, version_resolver=None, version_selector=None, base_url=None)`
 
 
 #### Parameters:
@@ -4556,6 +4634,7 @@ unpack_method | `string`<br><p>The method by which to unpack the remote file. Cu
 archive_source | `string`<br><p>Template or literal URL to download archive from. Optionally you can use ${VERSION} in your URL string as placeholder for later resolved versions during origin checkout. E.g. 'https://proxy.golang.org/mymodule/@v/${VERSION}.zip'</p>
 version_list | `VersionList` or `NoneType`<br><p>Version list to select versions on. Omit to create a versionless origin.</p>
 origin_version_selector | `VersionSelector` or `NoneType`<br><p>Version selector used to select on version_list. Omit to create a versionless origin.</p>
+version_resolver | `VersionResolver` or `NoneType`<br><p>Version resolvers are used to resolve refs to specific versions. Primarily used when command line refs are provided and accompanied by the '--force' or '--version-selector-use-cli-ref' flag.</p>
 version_selector | `unknown`<br><p>Object that contains version selecting logic. DEPRECATED.</p>
 base_url | `unknown`<br><p>base URL to construct the full URL. DEPRECATED.</p>
 
@@ -4597,6 +4676,72 @@ Structs are immutable objects to group values.
 ```python
 my_struct = struct(foo='bar')
 x = my_struct.foo
+```
+
+
+
+
+## toml
+
+Module for parsing TOML in Copybara.
+
+<a id="toml.parse" aria-hidden="true"></a>
+### toml.parse
+
+Parse the TOML content. Returns a toml object.
+
+[`TomlContent`](#tomlcontent) `toml.parse(content)`
+
+
+#### Parameters:
+
+Parameter | Description
+--------- | -----------
+content | `string`<br><p>TOML content to be parsed</p>
+
+
+#### Example:
+
+
+##### Parsing a TOML string:
+
+To parse a TOML string, pass the string into the parser.
+
+```python
+toml.parse("foo = 42")
+```
+
+
+
+
+## TomlContent
+
+Object containing parsed TOML values.
+
+<a id="TomlContent.get" aria-hidden="true"></a>
+### TomlContent.get
+
+Retrieve the value from the parsed TOML for the given key. If the key is not defined, this will return None.
+
+`unknown` `TomlContent.get(key)`
+
+
+#### Parameters:
+
+Parameter | Description
+--------- | -----------
+key | `string`<br><p>The dotted key expression</p>
+
+
+#### Example:
+
+
+##### Get the value for a key:
+
+Pass in the name of the key. This will return the value.
+
+```python
+TomlContent.get("foo")
 ```
 
 

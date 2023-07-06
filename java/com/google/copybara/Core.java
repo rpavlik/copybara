@@ -1894,11 +1894,9 @@ public class Core implements LabelsAwareModule, StarlarkValue {
         regex, Replace.parsePatterns(groupsMap), elements, thread.getCallerLocation());
     ImmutableList<String> extraGroups = versionPicker.getUnmatchedGroups();
     check(extraGroups.isEmpty(), "Extra regex_groups not used in pattern: %s", extraGroups);
-
-    if (generalOptions.isForced()) {
-      return new OrderedVersionSelector(ImmutableList.of(
-          new RequestedVersionSelector(),
-          versionPicker));
+    if (generalOptions.isForced() || generalOptions.isVersionSelectorUseCliRef()) {
+      return new OrderedVersionSelector(
+          ImmutableList.of(new RequestedVersionSelector(), versionPicker));
     }
     return versionPicker;
   }
@@ -1955,13 +1953,24 @@ public class Core implements LabelsAwareModule, StarlarkValue {
         @Param(
             name = "suffix",
             doc = "Suffix to use when saving patch files",
-            allowedTypes = {
-              @ParamType(type = String.class),
-              @ParamType(type = NoneType.class),
-            },
             named = true,
             positional = false,
             defaultValue = "'.patch'"),
+        @Param(
+            name = "directory_prefix",
+            doc =
+                "Directory prefix used to relativize filenames when writing patch files. E.g. if"
+                    + " filename is third_party/foo/bar/bar.go and we want to write"
+                    + " third_party/foo/PATCHES/bar/bar.go, the value for this field would be"
+                    + " 'third_party/foo'",
+            named = true,
+            positional = false,
+            // TODO: temporarily include a default value to not break existing usage
+            defaultValue = "'None'",
+            allowedTypes = {
+              @ParamType(type = String.class),
+              @ParamType(type = NoneType.class),
+            }),
         @Param(
             name = "directory",
             doc = "Directory in which to save the patch files.",
@@ -1980,10 +1989,15 @@ public class Core implements LabelsAwareModule, StarlarkValue {
             defaultValue = "False")
       })
   public AutoPatchfileConfiguration autoPatchfileConfiguration(
-      Object fileContentsPrefix, Object suffix, Object directory, boolean stripFileNames) {
+      Object fileContentsPrefix,
+      String suffix,
+      Object directoryPrefix,
+      Object directory,
+      boolean stripFileNames) {
     return AutoPatchfileConfiguration.create(
         convertFromNoneable(fileContentsPrefix, null),
-        convertFromNoneable(suffix, null),
+        suffix,
+        convertFromNoneable(directoryPrefix, null),
         convertFromNoneable(directory, null),
         stripFileNames);
   }
