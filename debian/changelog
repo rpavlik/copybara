@@ -1,3 +1,9 @@
+copybara (0.0.0.r2767.g4ba67489-3) UNRELEASED; urgency=medium
+
+  * Add patch for fixing security vulnerabilities in deps
+
+ -- Ryan Pavlik <ryan@ryanpavlik.com>  Thu, 06 Jul 2023 16:06:18 -0500
+
 copybara (0.0.0.r2767.g4ba67489-2) unstable; urgency=medium
 
   * Adjust doc-base file again to fix lintian complaint
